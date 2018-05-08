@@ -14,6 +14,6 @@ class ParsenDensityEstimator(object):
         :return:
         """
         d = (tf.expand_dims(x, 0) - mu) / sigma
-        e = -0.5 * tf.reduce_sum(tf.mul(d, d), axis=2)
+        e = -0.5 * tf.reduce_sum(tf.square(d), axis=2)
         z = tf.to_float(tf.shape(mu)[2]) * tf.log(np.float32(sigma * np.sqrt(np.pi * 2.0)))
         return e - z

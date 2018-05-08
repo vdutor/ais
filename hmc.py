@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 def kinetic_energy(v):
-    return 0.5 * tf.reduce_sum(tf.mul(v, v), axis=1)
+    return 0.5 * tf.reduce_sum(tf.square(v), axis=1)
 
 
 def hamiltonian(p, v, f):
@@ -54,8 +54,8 @@ def hmc_move(initial_pos, energy_fn, stepsize, n_steps):
 def hmc_updates(initial_pos, stepsize, avg_acceptance_rate, final_pos, accept,
                 target_acceptance_rate, stepsize_inc, stepsize_dec,
                 stepsize_min, stepsize_max, avg_acceptance_slowness):
-    new_pos = tf.select(accept, final_pos, initial_pos)
-    new_stepsize_ = tf.select(avg_acceptance_rate > target_acceptance_rate, stepsize_inc, stepsize_dec) * stepsize
+    new_pos = tf.where(accept, final_pos, initial_pos)
+    new_stepsize_ = tf.where(avg_acceptance_rate > target_acceptance_rate, stepsize_inc, stepsize_dec) * stepsize
     new_stepsize = tf.maximum(tf.minimum(new_stepsize_, stepsize_max), stepsize_min)
     new_acceptance_rate = tf.add(avg_acceptance_slowness * avg_acceptance_rate,
                                  (1.0 - avg_acceptance_slowness) * tf.reduce_mean(tf.to_float(accept)))

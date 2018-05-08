@@ -16,7 +16,7 @@ def tf_log_mean_exp(x, axis=None):
 
 def tf_parzen(x, mu, sigma):
     d = (tf.expand_dims(x, 1) - tf.expand_dims(mu, 0)) / sigma
-    e = tf_log_mean_exp(-0.5 * tf.reduce_sum(tf.mul(d, d), axis=2), axis=1)
+    e = tf_log_mean_exp(-0.5 * tf.reduce_sum(tf.square(d), axis=2), axis=1)
     e = tf.squeeze(e, axis=1)
     z = tf.to_float(tf.shape(mu)[1]) * tf.log(sigma * np.sqrt(np.pi * 2.0))
     return e - z
