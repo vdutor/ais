@@ -5,8 +5,11 @@ def kinetic_energy(v):
     return 0.5 * tf.reduce_sum(tf.square(v), axis=1)
 
 
-def hamiltonian(p, v, f):
-    return f(p) + kinetic_energy(v)
+def hamiltonian(p, v, f, labels=None):
+    if type(labels) == tf.Tensor:
+        return f(p, labels) + kinetic_energy(v)
+    else:
+        return f(p) + kinetic_energy(v)
 
 
 def metropolis_hastings_accept(energy_prev, energy_next):
@@ -14,9 +17,15 @@ def metropolis_hastings_accept(energy_prev, energy_next):
     return (tf.exp(ediff) - tf.random_uniform(tf.shape(energy_prev))) >= 0.0
 
 
-def simulate_dynamics(initial_pos, initial_vel, stepsize, n_steps, energy_fn):
+def simulate_dynamics(initial_pos, initial_vel, stepsize, n_steps, energy_fn, labels=None):
+    def grads(pos):
+        if type(labels) == tf.Tensor:
+            return tf.gradients(tf.reduce_sum(energy_fn(pos, labels)), pos)[0]
+        else:
+            return tf.gradients(tf.reduce_sum(energy_fn(pos)), pos)[0]
+
     def leapfrog(pos, vel, step, i):
-        dE_dpos = tf.gradients(tf.reduce_sum(energy_fn(pos)), pos)[0]
+        dE_dpos = grads(pos)
         new_vel = vel - step * dE_dpos
         new_pos = pos + step * new_vel
         return [new_pos, new_vel, step, tf.add(i, 1)]
@@ -24,29 +33,31 @@ def simulate_dynamics(initial_pos, initial_vel, stepsize, n_steps, energy_fn):
     def condition(pos, vel, step, i):
         return tf.less(i, n_steps)
 
-    dE_dpos = tf.gradients(tf.reduce_sum(energy_fn(initial_pos)), initial_pos)[0]
+
+    dE_dpos = grads(initial_pos)
     vel_half_step = initial_vel - 0.5 * stepsize * dE_dpos
     pos_full_step = initial_pos + stepsize * vel_half_step
 
     i = tf.constant(0)
     final_pos, new_vel, _, _ = tf.while_loop(condition, leapfrog, [pos_full_step, vel_half_step, stepsize, i])
-    dE_dpos = tf.gradients(tf.reduce_sum(energy_fn(final_pos)), final_pos)[0]
+    dE_dpos = grads(final_pos)
     final_vel = new_vel - 0.5 * stepsize * dE_dpos
     return final_pos, final_vel
 
 
-def hmc_move(initial_pos, energy_fn, stepsize, n_steps):
+def hmc_move(initial_pos, energy_fn, stepsize, n_steps, labels=None):
     initial_vel = tf.random_normal(tf.shape(initial_pos))
     final_pos, final_vel = simulate_dynamics(
         initial_pos=initial_pos,
         initial_vel=initial_vel,
         stepsize=stepsize,
         n_steps=n_steps,
-        energy_fn=energy_fn
+        energy_fn=energy_fn,
+        labels=labels
     )
     accept = metropolis_hastings_accept(
-        energy_prev=hamiltonian(initial_pos, initial_vel, energy_fn),
-        energy_next=hamiltonian(final_pos, final_vel, energy_fn)
+        energy_prev=hamiltonian(initial_pos, initial_vel, energy_fn, labels=labels),
+        energy_next=hamiltonian(final_pos, final_vel, energy_fn, labels=labels)
     )
     return accept, final_pos, final_vel
 
