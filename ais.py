@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
-from hmc import *
-from parzen import log_mean_exp
+from .hmc import *
+from .parzen import log_mean_exp
 
 
 def get_schedule(num, rad=4):

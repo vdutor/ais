@@ -10,8 +10,8 @@ def log_mean_exp(x, axis=None):
 
 
 def tf_log_mean_exp(x, axis=None):
-    m = tf.reduce_max(x, axis=axis, keep_dims=True)
-    return m + tf.log(tf.reduce_mean(tf.exp(x - m), axis=axis, keep_dims=True))
+    m = tf.reduce_max(x, axis=axis, keepdims=True)
+    return m + tf.log(tf.reduce_mean(tf.exp(x - m), axis=axis, keepdims=True))
 
 
 def tf_parzen(x, mu, sigma):

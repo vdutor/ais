@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from parzen import tf_log_mean_exp
+from .parzen import tf_log_mean_exp
 
 
 class NormalPrior(object):
